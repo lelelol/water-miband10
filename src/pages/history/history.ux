@@ -1,0 +1,158 @@
+<template>
+  <div class="page">
+    <text class="title">Histórico</text>
+
+    <div class="grid-container">
+      <div class="day-box {{ item.taken ? 'box-taken' : 'box-empty' }}" for="{{ item in days }}">
+        <!-- Um quadradinho para cada dia -->
+      </div>
+    </div>
+
+    <text class="stats">Tomou: {{ takenCount }} / 30</text>
+
+    <input class="back-btn" type="button" value="Voltar" onclick="goBack" />
+  </div>
+</template>
+
+<style>
+  .page {
+    flex-direction: column;
+    align-items: center;
+    background-color: #000000;
+  }
+  .title {
+    font-size: 22px;
+    color: #ffffff;
+    text-align: center;
+    font-weight: bold;
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+  .grid-container {
+    width: 170px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .day-box {
+    width: 20px;
+    height: 20px;
+    margin: 4px;
+    border-radius: 4px;
+  }
+  .box-taken {
+    background-color: #18d47c;
+  }
+  .box-empty {
+    background-color: #333333;
+  }
+  .stats {
+    font-size: 18px;
+    color: #999999;
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+  .back-btn {
+    width: 160px;
+    height: 40px;
+    border-radius: 20px;
+    font-size: 18px;
+    color: #ffffff;
+    background-color: #e84057;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+</style>
+
+<script>
+  import storage from '@system.storage'
+  import router from '@system.router'
+
+  export default {
+    private: {
+      days: [],
+      takenCount: 0
+    },
+
+    onInit() {
+      this.loadHistory()
+    },
+
+    loadHistory() {
+      const self = this
+      storage.get({
+        key: 'creatine_data',
+        success: function(data) {
+          let history = {}
+          if (data) {
+            try { history = JSON.parse(data) } catch (e) {}
+          }
+          self.processHistory(history)
+        },
+        fail: function() {
+          self.processHistory({})
+        }
+      })
+    },
+
+    processHistory(history) {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0) // zera horas
+      
+      const newDays = []
+      let count = 0
+      let needsSave = false
+
+      // Gera os ultimos 30 dias na ordem (do mais antigo pro mais novo ou vice-versa? Vamos do mais antigo pro mais novo)
+      // Para caber bonitinho no CSS flex-wrap, 30 itens preenchem linhas.
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(today.getTime() - (i * 24 * 60 * 60 * 1000))
+        const y = d.getFullYear()
+        const m = String(d.getMonth() + 1).padStart(2, '0')
+        const day = String(d.getDate()).padStart(2, '0')
+        const dateString = y + '-' + m + '-' + day
+
+        const isTaken = !!history[dateString]
+        if (isTaken) count++
+
+        newDays.push({
+          date: dateString,
+          taken: isTaken
+        })
+      }
+
+      // Garbage Collector: remove chaves com mais de 30 dias
+      const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000))
+      
+      const keys = Object.keys(history)
+      for (let k = 0; k < keys.length; k++) {
+        const keyDate = keys[k]
+        try {
+          const parts = keyDate.split('-')
+          const kd = new Date(parts[0], parts[1] - 1, parts[2])
+          kd.setHours(0, 0, 0, 0)
+          if (kd.getTime() < thirtyDaysAgo.getTime()) {
+            delete history[keyDate]
+            needsSave = true
+          }
+        } catch (e) {}
+      }
+
+      // Se apagou registros velhos, salva novamente
+      if (needsSave) {
+        storage.set({
+          key: 'creatine_data',
+          value: JSON.stringify(history)
+        })
+      }
+
+      this.days = newDays
+      this.takenCount = count
+    },
+
+    goBack() {
+      router.back()
+    }
+  }
+</script>

@@ -1,0 +1,31 @@
+{
+  "package": "com.lelehealth.miband10",
+  "name": "LeleHealth",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "minPlatformVersion": 1000,
+  "icon": "/common/logo.png",
+  "features": [
+    { "name": "system.fetch" },
+    { "name": "system.vibrator" }
+  ],
+  "permissions": [
+    { "origin": "*" }
+  ],
+  "config": {
+    "designWidth": 192
+  },
+  "router": {
+    "entry": "pages/index",
+    "pages": {
+      "pages/index": {
+        "component": "index"
+      }
+    }
+  },
+  "display": {
+    "backgroundColor": "#000000",
+    "fullScreen": true,
+    "titleBar": false
+  }
+}

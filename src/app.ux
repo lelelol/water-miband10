@@ -1,0 +1,27 @@
+<script>
+  export default {
+    data: {
+      appName: 'LeleHealth'
+    },
+
+    onCreate() {
+      console.info('LeleHealth: app created')
+    },
+
+    onShow() {
+      console.info('LeleHealth: app in foreground')
+    },
+
+    onHide() {
+      console.info('LeleHealth: app in background')
+    },
+
+    onDestroy() {
+      console.info('LeleHealth: app destroyed')
+    },
+
+    onError(err) {
+      console.error('LeleHealth: app error -', err)
+    }
+  }
+</script>

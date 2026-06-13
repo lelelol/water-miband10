@@ -1,0 +1,199 @@
+<template>
+  <div class="container">
+    <text class="date-text">{{ currentDate }}</text>
+    <text class="title">Creatina</text>
+    
+    <div class="status-container">
+      <text class="status-icon" if="{{loading}}">...</text>
+      <text class="status-icon success" elif="{{taken}}">✓</text>
+      <text class="status-icon pending" else>○</text>
+    </div>
+
+    <input 
+      type="button" 
+      class="btn {{ taken ? 'btn-cancel' : 'btn-take' }}" 
+      value="{{ taken ? 'Cancelar' : 'Tomar' }}" 
+      onclick="handleAction" 
+      disabled="{{loading}}"
+    />
+  </div>
+</template>
+
+<style>
+  .container {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #000000;
+    width: 100%;
+    height: 100%;
+  }
+  .date-text {
+    color: #888888;
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+  .title {
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 30px;
+  }
+  .status-container {
+    height: 80px;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 40px;
+  }
+  .status-icon {
+    font-size: 40px;
+    color: #ffffff;
+  }
+  .success {
+    color: #18d47c;
+  }
+  .pending {
+    color: #888888;
+  }
+  .btn {
+    width: 140px;
+    height: 50px;
+    border-radius: 25px;
+    font-size: 22px;
+    color: #ffffff;
+  }
+  .btn-take {
+    background-color: #18d47c;
+  }
+  .btn-cancel {
+    background-color: #e84057;
+  }
+</style>
+
+<script>
+  import fetch from '@system.fetch'
+  import vibrator from '@system.vibrator'
+
+  // Replace with your actual Supabase URL and ANON KEY
+  const SUPABASE_URL = 'https://xhdxjnbzadetnnljlhtd.supabase.co'
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoZHhqbmJ6YWRldG5ubGpsaHRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNTMyODUsImV4cCI6MjA5NjgyOTI4NX0.GmlRzpqlmmlo6PfU_Gd7c8yHyKZO3HnfDTGbor_hmUo'
+  
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation'
+  }
+
+  export default {
+    private: {
+      loading: true,
+      taken: false,
+      currentDate: '',
+      dateString: '',
+      recordId: null
+    },
+
+    onInit() {
+      this.initDate()
+      this.checkStatus()
+    },
+
+    initDate() {
+      const now = new Date()
+      // format "DD/MM/YYYY"
+      this.currentDate = now.toLocaleDateString('pt-BR')
+      // format "YYYY-MM-DD"
+      this.dateString = now.toISOString().split('T')[0]
+    },
+
+    checkStatus() {
+      this.loading = true
+      fetch.fetch({
+        url: `${SUPABASE_URL}/creatine_intake?date_string=eq.${this.dateString}&select=*`,
+        header: headers,
+        method: 'GET',
+        success: (res) => {
+          if (res.code === 200) {
+            const data = JSON.parse(res.data)
+            if (data && data.length > 0) {
+              this.taken = true
+              this.recordId = data[0].id
+            } else {
+              this.taken = false
+              this.recordId = null
+            }
+          }
+        },
+        complete: () => {
+          this.loading = false
+        }
+      })
+    },
+
+    handleAction() {
+      if (this.loading) return
+
+      if (this.taken) {
+        this.cancelarTomada()
+      } else {
+        this.marcarTomado()
+      }
+    },
+
+    marcarTomado() {
+      this.loading = true
+      fetch.fetch({
+        url: `${SUPABASE_URL}/creatine_intake`,
+        header: headers,
+        method: 'POST',
+        data: JSON.stringify({
+          date_string: this.dateString
+        }),
+        success: (res) => {
+          if (res.code === 201 || res.code === 200) {
+            const data = JSON.parse(res.data)
+            this.taken = true
+            if (data && data.length > 0) {
+              this.recordId = data[0].id
+            }
+            this.vibrate()
+          }
+        },
+        complete: () => {
+          this.loading = false
+        }
+      })
+    },
+
+    cancelarTomada() {
+      if (!this.recordId) {
+        this.taken = false
+        return
+      }
+
+      this.loading = true
+      fetch.fetch({
+        url: `${SUPABASE_URL}/creatine_intake?id=eq.${this.recordId}`,
+        header: headers,
+        method: 'DELETE',
+        success: (res) => {
+          if (res.code === 204 || res.code === 200) {
+            this.taken = false
+            this.recordId = null
+            this.vibrate()
+          }
+        },
+        complete: () => {
+          this.loading = false
+        }
+      })
+    },
+
+    vibrate() {
+      vibrator.vibrate({
+        mode: 'short'
+      })
+    }
+  }
+</script>

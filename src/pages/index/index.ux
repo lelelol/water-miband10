@@ -1,0 +1,208 @@
+<template>
+  <div class="page">
+    <text class="date">{{ dateString }}</text>
+    <text class="title">Creatina</text>
+
+    <!-- ──── Status Icon ──── -->
+    <text class="status-icon icon-taken" if="{{ taken }}">✓</text>
+    <text class="status-icon icon-not-taken" if="{{ !taken }}">○</text>
+
+    <!-- ──── Status Label ──── -->
+    <text class="status-label label-taken" if="{{ taken }}">Tomada hoje!</text>
+    <text class="status-label label-not-taken" if="{{ !taken }}">Ainda não tomou</text>
+
+    <!-- ──── Action Button ──── -->
+    <input class="action-btn btn-cancel" type="button" value="Cancelar" if="{{ taken }}" onclick="cancelTaken" />
+    <input class="action-btn btn-take" type="button" value="Tomar" if="{{ !taken }}" onclick="markTaken" />
+
+    <!-- ──── Nav Button ──── -->
+    <input class="nav-btn" type="button" value="Ver Histórico" onclick="goHistory" />
+  </div>
+</template>
+
+<style>
+  .page {
+    flex-direction: column;
+    align-items: center;
+    background-color: #000000;
+  }
+  .date {
+    font-size: 18px;
+    color: #999999;
+    text-align: center;
+    margin-top: 24px;
+    margin-bottom: 4px;
+  }
+  .title {
+    font-size: 28px;
+    color: #ffffff;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  .status-icon {
+    font-size: 64px;
+    text-align: center;
+    margin-top: 30px;
+    margin-bottom: 8px;
+  }
+  .icon-taken { color: #18d47c; }
+  .icon-not-taken { color: #999999; }
+  .status-label {
+    font-size: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .label-taken { color: #18d47c; }
+  .label-not-taken { color: #999999; }
+  .action-btn {
+    width: 180px;
+    height: 50px;
+    border-radius: 25px;
+    font-size: 20px;
+    color: #ffffff;
+    text-align: center;
+    margin-top: 20px;
+    font-weight: bold;
+  }
+  .btn-cancel { background-color: #e84057; }
+  .btn-take { background-color: #18d47c; }
+  .nav-btn {
+    width: 160px;
+    height: 40px;
+    border-radius: 20px;
+    font-size: 18px;
+    color: #ffffff;
+    text-align: center;
+    margin-top: 30px;
+    background-color: #333333;
+  }
+</style>
+
+<script>
+  import storage from '@system.storage'
+  import router from '@system.router'
+  import vibrator from '@system.vibrator'
+
+  export default {
+    private: {
+      taken: false,
+      dateString: ''
+    },
+
+    onInit() {
+      this.dateString = this.getTodayString()
+    },
+
+    onShow() {
+      const current = this.getTodayString()
+      if (current !== this.dateString) {
+        this.dateString = current
+        this.taken = false
+      }
+      this.checkStatus()
+    },
+
+    getTodayString() {
+      const now = new Date()
+      const y = now.getFullYear()
+      const m = String(now.getMonth() + 1).padStart(2, '0')
+      const d = String(now.getDate()).padStart(2, '0')
+      return y + '-' + m + '-' + d
+    },
+
+    vibrateShort() {
+      try {
+        if (vibrator && vibrator.vibrate) {
+          vibrator.vibrate({ mode: 'short' })
+        }
+      } catch (e) {}
+    },
+
+    checkStatus() {
+      const self = this
+      storage.get({
+        key: 'creatine_data',
+        success: function(data) {
+          if (data) {
+            try {
+              const history = JSON.parse(data)
+              self.taken = !!history[self.dateString]
+            } catch (e) {
+              self.taken = false
+            }
+          } else {
+            self.taken = false
+          }
+        },
+        fail: function(data, code) {
+          self.taken = false
+        }
+      })
+    },
+
+    markTaken() {
+      const self = this
+      storage.get({
+        key: 'creatine_data',
+        success: function(data) {
+          let history = {}
+          if (data) {
+            try { history = JSON.parse(data) } catch (e) {}
+          }
+          history[self.dateString] = true
+          storage.set({
+            key: 'creatine_data',
+            value: JSON.stringify(history),
+            success: function() {
+              self.taken = true
+              self.vibrateShort()
+            }
+          })
+        },
+        fail: function() {
+          // Se falhar o get, cria um novo
+          let history = {}
+          history[self.dateString] = true
+          storage.set({
+            key: 'creatine_data',
+            value: JSON.stringify(history),
+            success: function() {
+              self.taken = true
+              self.vibrateShort()
+            }
+          })
+        }
+      })
+    },
+
+    cancelTaken() {
+      const self = this
+      storage.get({
+        key: 'creatine_data',
+        success: function(data) {
+          if (data) {
+            try {
+              let history = JSON.parse(data)
+              delete history[self.dateString]
+              storage.set({
+                key: 'creatine_data',
+                value: JSON.stringify(history),
+                success: function() {
+                  self.taken = false
+                  self.vibrateShort()
+                }
+              })
+            } catch (e) {}
+          }
+        }
+      })
+    },
+
+    goHistory() {
+      router.push({
+        uri: 'pages/history'
+      })
+    }
+  }
+</script>
