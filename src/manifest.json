@@ -1,6 +1,6 @@
 {
-  "package": "com.lelehealth.creatina",
-  "name": "LeleHealth",
+  "package": "com.lelehealth.water",
+  "name": "LeleWater",
   "versionName": "1.0.0",
   "versionCode": 1,
   "icon": "/common/logo.png",
@@ -18,9 +18,6 @@
     },
     {
       "name": "system.storage"
-    },
-    {
-      "name": "system.fetch"
     }
   ],
   "config": {
@@ -44,10 +41,10 @@
   },
   "i18n": {
     "en-US": {
-      "name": "LeleHealth"
+      "name": "LeleWater"
     },
     "pt-BR": {
-      "name": "LeleHealth"
+      "name": "LeleWater"
     }
   },
   "defaultLanguage": "pt-BR"

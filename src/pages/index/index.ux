@@ -1,22 +1,34 @@
 <template>
   <div class="page">
+    <!-- ──── Blue fill background ──── -->
+    <div class="water-fill" style="height: {{ fillHeight }}px;"></div>
+
+    <!-- ──── Content on top ──── -->
     <text class="date">{{ dateString }}</text>
-    <text class="title">Creatina</text>
+    <text class="title">Água</text>
+
+    <!-- ──── Progress ──── -->
+    <text class="progress">{{ currentMl }} / {{ goalMl }} ml</text>
 
     <!-- ──── Status Icon ──── -->
-    <text class="status-icon icon-taken" if="{{ taken }}">✓</text>
-    <text class="status-icon icon-not-taken" if="{{ !taken }}">○</text>
+    <text class="status-icon icon-done" if="{{ currentMl >= goalMl }}">✓</text>
+    <text class="status-icon icon-pending" if="{{ currentMl < goalMl }}">💧</text>
 
-    <!-- ──── Status Label ──── -->
-    <text class="status-label label-taken" if="{{ taken }}">Tomada hoje!</text>
-    <text class="status-label label-not-taken" if="{{ !taken }}">Ainda não tomou</text>
+    <!-- ──── Increment controls ──── -->
+    <div class="increment-row">
+      <input class="inc-btn" type="button" value="−" onclick="decreaseIncrement" />
+      <text class="inc-value">{{ incrementAmount }}ml</text>
+      <input class="inc-btn" type="button" value="+" onclick="increaseIncrement" />
+    </div>
 
     <!-- ──── Action Button ──── -->
-    <input class="action-btn btn-cancel" type="button" value="Cancelar" if="{{ taken }}" onclick="cancelTaken" />
-    <input class="action-btn btn-take" type="button" value="Tomar" if="{{ !taken }}" onclick="markTaken" />
+    <input class="action-btn btn-drink" type="button" value="Beber" onclick="drinkWater" />
+
+    <!-- ──── Undo last ──── -->
+    <input class="undo-btn" type="button" value="Desfazer" if="{{ currentMl > 0 }}" onclick="undoDrink" />
 
     <!-- ──── Nav Button ──── -->
-    <input class="nav-btn" type="button" value="Ver Histórico" onclick="goHistory" />
+    <input class="nav-btn" type="button" value="Histórico" onclick="goHistory" />
   </div>
 </template>
 
@@ -26,55 +38,94 @@
     align-items: center;
     background-color: #000000;
   }
+  .water-fill {
+    position: fixed;
+    bottom: 0px;
+    left: 0px;
+    width: 192px;
+    background-color: #0088cc;
+    opacity: 0.45;
+  }
   .date {
-    font-size: 18px;
-    color: #999999;
+    font-size: 16px;
+    color: #aaaaaa;
     text-align: center;
-    margin-top: 24px;
-    margin-bottom: 4px;
+    margin-top: 16px;
+    margin-bottom: 2px;
   }
   .title {
-    font-size: 28px;
+    font-size: 26px;
     color: #ffffff;
     text-align: center;
     font-weight: bold;
-    margin-bottom: 20px;
+    margin-bottom: 6px;
+  }
+  .progress {
+    font-size: 20px;
+    color: #66ccff;
+    text-align: center;
+    margin-bottom: 4px;
+    font-weight: bold;
   }
   .status-icon {
-    font-size: 64px;
+    font-size: 40px;
     text-align: center;
-    margin-top: 30px;
-    margin-bottom: 8px;
+    margin-top: 4px;
+    margin-bottom: 4px;
   }
-  .icon-taken { color: #18d47c; }
-  .icon-not-taken { color: #999999; }
-  .status-label {
-    font-size: 20px;
-    text-align: center;
-    margin-bottom: 20px;
+  .icon-done { color: #00ccff; }
+  .icon-pending { color: #aaaaaa; }
+  .increment-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-top: 6px;
+    margin-bottom: 6px;
   }
-  .label-taken { color: #18d47c; }
-  .label-not-taken { color: #999999; }
-  .action-btn {
-    width: 180px;
-    height: 50px;
-    border-radius: 25px;
-    font-size: 20px;
+  .inc-btn {
+    width: 40px;
+    height: 36px;
+    border-radius: 18px;
+    font-size: 22px;
     color: #ffffff;
     text-align: center;
-    margin-top: 20px;
+    background-color: #444444;
     font-weight: bold;
   }
-  .btn-cancel { background-color: #e84057; }
-  .btn-take { background-color: #18d47c; }
-  .nav-btn {
-    width: 160px;
-    height: 40px;
-    border-radius: 20px;
+  .inc-value {
     font-size: 18px;
     color: #ffffff;
     text-align: center;
-    margin-top: 30px;
+    width: 80px;
+  }
+  .action-btn {
+    width: 160px;
+    height: 46px;
+    border-radius: 23px;
+    font-size: 20px;
+    color: #ffffff;
+    text-align: center;
+    font-weight: bold;
+  }
+  .btn-drink { background-color: #0088cc; }
+  .undo-btn {
+    width: 120px;
+    height: 34px;
+    border-radius: 17px;
+    font-size: 16px;
+    color: #ffffff;
+    text-align: center;
+    background-color: #e84057;
+    margin-top: 8px;
+  }
+  .nav-btn {
+    width: 140px;
+    height: 36px;
+    border-radius: 18px;
+    font-size: 16px;
+    color: #ffffff;
+    text-align: center;
+    margin-top: 10px;
     background-color: #333333;
   }
 </style>
@@ -84,10 +135,22 @@
   import router from '@system.router'
   import vibrator from '@system.vibrator'
 
+  // Screen height for fill calculation
+  var SCREEN_HEIGHT = 490
+  var GOAL_ML = 4000
+  var MIN_INCREMENT = 50
+  var MAX_INCREMENT = 2000
+  var INCREMENT_STEP = 50
+  var DEFAULT_INCREMENT = 500
+
   export default {
     private: {
-      taken: false,
-      dateString: ''
+      currentMl: 0,
+      goalMl: GOAL_ML,
+      incrementAmount: DEFAULT_INCREMENT,
+      fillHeight: 0,
+      dateString: '',
+      lastDrinkAmount: 0
     },
 
     onInit() {
@@ -95,19 +158,20 @@
     },
 
     onShow() {
-      const current = this.getTodayString()
+      var current = this.getTodayString()
       if (current !== this.dateString) {
         this.dateString = current
-        this.taken = false
+        this.currentMl = 0
+        this.fillHeight = 0
       }
-      this.checkStatus()
+      this.loadToday()
     },
 
     getTodayString() {
-      const now = new Date()
-      const y = now.getFullYear()
-      const m = String(now.getMonth() + 1).padStart(2, '0')
-      const d = String(now.getDate()).padStart(2, '0')
+      var now = new Date()
+      var y = now.getFullYear()
+      var m = String(now.getMonth() + 1).padStart(2, '0')
+      var d = String(now.getDate()).padStart(2, '0')
       return y + '-' + m + '-' + d
     },
 
@@ -119,84 +183,94 @@
       } catch (e) {}
     },
 
-    checkStatus() {
-      const self = this
+    updateFill() {
+      var ratio = this.currentMl / GOAL_ML
+      if (ratio > 1) ratio = 1
+      this.fillHeight = Math.round(ratio * SCREEN_HEIGHT)
+    },
+
+    loadToday() {
+      var self = this
       storage.get({
-        key: 'creatine_data',
+        key: 'water_data',
         success: function(data) {
           if (data) {
             try {
-              const history = JSON.parse(data)
-              self.taken = !!history[self.dateString]
+              var history = JSON.parse(data)
+              var todayVal = history[self.dateString]
+              self.currentMl = (typeof todayVal === 'number') ? todayVal : 0
             } catch (e) {
-              self.taken = false
+              self.currentMl = 0
             }
           } else {
-            self.taken = false
+            self.currentMl = 0
           }
+          self.updateFill()
         },
-        fail: function(data, code) {
-          self.taken = false
+        fail: function() {
+          self.currentMl = 0
+          self.updateFill()
         }
       })
     },
 
-    markTaken() {
-      const self = this
+    saveTodayAmount() {
+      var self = this
       storage.get({
-        key: 'creatine_data',
+        key: 'water_data',
         success: function(data) {
-          let history = {}
+          var history = {}
           if (data) {
             try { history = JSON.parse(data) } catch (e) {}
           }
-          history[self.dateString] = true
+          history[self.dateString] = self.currentMl
           storage.set({
-            key: 'creatine_data',
-            value: JSON.stringify(history),
-            success: function() {
-              self.taken = true
-              self.vibrateShort()
-            }
+            key: 'water_data',
+            value: JSON.stringify(history)
           })
         },
         fail: function() {
-          // Se falhar o get, cria um novo
-          let history = {}
-          history[self.dateString] = true
+          var history = {}
+          history[self.dateString] = self.currentMl
           storage.set({
-            key: 'creatine_data',
-            value: JSON.stringify(history),
-            success: function() {
-              self.taken = true
-              self.vibrateShort()
-            }
+            key: 'water_data',
+            value: JSON.stringify(history)
           })
         }
       })
     },
 
-    cancelTaken() {
-      const self = this
-      storage.get({
-        key: 'creatine_data',
-        success: function(data) {
-          if (data) {
-            try {
-              let history = JSON.parse(data)
-              delete history[self.dateString]
-              storage.set({
-                key: 'creatine_data',
-                value: JSON.stringify(history),
-                success: function() {
-                  self.taken = false
-                  self.vibrateShort()
-                }
-              })
-            } catch (e) {}
-          }
-        }
-      })
+    increaseIncrement() {
+      if (this.incrementAmount < MAX_INCREMENT) {
+        this.incrementAmount += INCREMENT_STEP
+      }
+      this.vibrateShort()
+    },
+
+    decreaseIncrement() {
+      if (this.incrementAmount > MIN_INCREMENT) {
+        this.incrementAmount -= INCREMENT_STEP
+      }
+      this.vibrateShort()
+    },
+
+    drinkWater() {
+      this.lastDrinkAmount = this.incrementAmount
+      this.currentMl += this.incrementAmount
+      this.updateFill()
+      this.saveTodayAmount()
+      this.vibrateShort()
+    },
+
+    undoDrink() {
+      if (this.lastDrinkAmount > 0 && this.currentMl > 0) {
+        this.currentMl -= this.lastDrinkAmount
+        if (this.currentMl < 0) this.currentMl = 0
+        this.lastDrinkAmount = 0
+        this.updateFill()
+        this.saveTodayAmount()
+        this.vibrateShort()
+      }
     },
 
     goHistory() {
