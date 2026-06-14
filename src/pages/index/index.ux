@@ -1,50 +1,56 @@
 <template>
-  <div class="page">
-    <!-- ──── Blue fill background ──── -->
-    <div class="water-fill" style="height: {{ fillHeight }}px;"></div>
+  <stack class="page">
+    <!-- ──── Blue fill background (bottom layer) ──── -->
+    <div class="water-fill" style="top: {{ 490 - fillHeight }}px; height: {{ fillHeight }}px;"></div>
 
     <!-- ──── Content on top ──── -->
-    <text class="date">{{ dateString }}</text>
-    <text class="title">Água</text>
+    <div class="content">
+      <text class="date">{{ dateString }}</text>
+      <text class="title">Água</text>
 
-    <!-- ──── Progress ──── -->
-    <text class="progress">{{ currentMl }} / {{ goalMl }} ml</text>
+      <!-- ──── Progress ──── -->
+      <text class="progress">{{ currentMl }} / {{ goalMl }} ml</text>
 
-    <!-- ──── Status Icon ──── -->
-    <text class="status-icon icon-done" if="{{ currentMl >= goalMl }}">✓</text>
-    <text class="status-icon icon-pending" if="{{ currentMl < goalMl }}">💧</text>
+      <!-- ──── Status Icon ──── -->
+      <text class="status-icon icon-done" if="{{ currentMl >= goalMl }}">✓</text>
+      <text class="status-icon icon-pending" if="{{ currentMl < goalMl }}">💧</text>
 
-    <!-- ──── Increment controls ──── -->
-    <div class="increment-row">
-      <input class="inc-btn" type="button" value="−" onclick="decreaseIncrement" />
-      <text class="inc-value">{{ incrementAmount }}ml</text>
-      <input class="inc-btn" type="button" value="+" onclick="increaseIncrement" />
+      <!-- ──── Increment controls ──── -->
+      <div class="increment-row">
+        <input class="inc-btn" type="button" value="−" onclick="decreaseIncrement" />
+        <text class="inc-value">{{ incrementAmount }}ml</text>
+        <input class="inc-btn" type="button" value="+" onclick="increaseIncrement" />
+      </div>
+
+      <!-- ──── Action Button ──── -->
+      <input class="action-btn btn-drink" type="button" value="Beber" onclick="drinkWater" />
+
+      <!-- ──── Undo last ──── -->
+      <input class="undo-btn" type="button" value="Desfazer" if="{{ currentMl > 0 }}" onclick="undoDrink" />
+
+      <!-- ──── Nav Button ──── -->
+      <input class="nav-btn" type="button" value="Histórico" onclick="goHistory" />
     </div>
-
-    <!-- ──── Action Button ──── -->
-    <input class="action-btn btn-drink" type="button" value="Beber" onclick="drinkWater" />
-
-    <!-- ──── Undo last ──── -->
-    <input class="undo-btn" type="button" value="Desfazer" if="{{ currentMl > 0 }}" onclick="undoDrink" />
-
-    <!-- ──── Nav Button ──── -->
-    <input class="nav-btn" type="button" value="Histórico" onclick="goHistory" />
-  </div>
+  </stack>
 </template>
 
 <style>
   .page {
-    flex-direction: column;
-    align-items: center;
-    background-color: #000000;
+    width: 192px;
+    height: 490px;
   }
   .water-fill {
-    position: fixed;
+    width: 192px;
     bottom: 0px;
     left: 0px;
-    width: 192px;
     background-color: #0088cc;
     opacity: 0.45;
+  }
+  .content {
+    width: 192px;
+    height: 490px;
+    flex-direction: column;
+    align-items: center;
   }
   .date {
     font-size: 16px;
@@ -62,7 +68,7 @@
   }
   .progress {
     font-size: 20px;
-    color: #66ccff;
+    color: #ffffff;
     text-align: center;
     margin-bottom: 4px;
     font-weight: bold;

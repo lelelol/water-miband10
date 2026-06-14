@@ -1,6 +1,6 @@
 {
   "package": "com.lelehealth.water",
-  "name": "LeleWater",
+  "name": "Água",
   "versionName": "1.0.0",
   "versionCode": 1,
   "icon": "/common/logo.png",
@@ -18,6 +18,9 @@
     },
     {
       "name": "system.storage"
+    },
+    {
+      "name": "system.fetch"
     }
   ],
   "config": {
