@@ -26,7 +26,9 @@
       <input class="action-btn btn-drink" type="button" value="Beber" onclick="drinkWater" />
 
       <!-- ──── Undo last ──── -->
-      <input class="undo-btn" type="button" value="Desfazer" if="{{ currentMl > 0 }}" onclick="undoDrink" />
+      <div class="undo-container">
+        <input class="undo-btn" type="button" value="Desfazer" if="{{ currentMl > 0 }}" onclick="undoDrink" />
+      </div>
 
       <!-- ──── Nav Button ──── -->
       <input class="nav-btn" type="button" value="Histórico" onclick="goHistory" />
@@ -56,28 +58,30 @@
     font-size: 16px;
     color: #aaaaaa;
     text-align: center;
-    margin-top: 16px;
-    margin-bottom: 2px;
+    margin-top: 10px;
+    margin-bottom: 0px;
   }
   .title {
+    margin-top: 10px;
     font-size: 26px;
     color: #ffffff;
     text-align: center;
     font-weight: bold;
-    margin-bottom: 6px;
+    margin-bottom: 2px;
   }
   .progress {
     font-size: 20px;
     color: #ffffff;
     text-align: center;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     font-weight: bold;
+    margin-top: 30px;
   }
   .status-icon {
     font-size: 40px;
     text-align: center;
-    margin-top: 4px;
-    margin-bottom: 4px;
+    margin-top: 0px;
+    margin-bottom: 0px;
   }
   .icon-done { color: #00ccff; }
   .icon-pending { color: #aaaaaa; }
@@ -85,54 +89,62 @@
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    margin-top: 6px;
-    margin-bottom: 6px;
+    margin-top: 4px;
+    margin-bottom: 4px;
   }
   .inc-btn {
-    width: 40px;
-    height: 36px;
-    border-radius: 18px;
-    font-size: 22px;
+    width: 44px;
+    height: 40px;
+    border-radius: 20px;
+    font-size: 24px;
     color: #ffffff;
     text-align: center;
     background-color: #444444;
     font-weight: bold;
   }
   .inc-value {
-    font-size: 18px;
+    font-size: 20px;
     color: #ffffff;
     text-align: center;
     width: 80px;
   }
   .action-btn {
-    width: 160px;
-    height: 46px;
-    border-radius: 23px;
-    font-size: 20px;
+    width: 164px;
+    height: 50px;
+    border-radius: 25px;
+    font-size: 24px;
     color: #ffffff;
     text-align: center;
     font-weight: bold;
+    margin-top: 30px;
   }
   .btn-drink { background-color: #0088cc; }
+  .undo-container {
+    height: 42px;
+    width: 192px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 12px;
+  }
   .undo-btn {
-    width: 120px;
-    height: 34px;
-    border-radius: 17px;
-    font-size: 16px;
+    width: 124px;
+    height: 38px;
+    border-radius: 19px;
+    font-size: 18px;
     color: #ffffff;
     text-align: center;
     background-color: #e84057;
-    margin-top: 8px;
   }
   .nav-btn {
-    width: 140px;
-    height: 36px;
-    border-radius: 18px;
-    font-size: 16px;
+    width: 144px;
+    height: 40px;
+    border-radius: 20px;
+    font-size: 18px;
     color: #ffffff;
     text-align: center;
-    margin-top: 10px;
     background-color: #333333;
+    margin-top: 12px;
   }
 </style>
 
